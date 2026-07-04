@@ -1,0 +1,76 @@
+# =============================================================
+# AI Capex 二阶导监控看板 — 配置
+# 纪律: 所有阈值初始状态为 UNCALIBRATED, 由决策层校准后改为 CALIBRATED
+#       任何数据缺失 → N/A, 禁止插值/延用旧值冒充新值
+# =============================================================
+
+meta:
+  dashboard_title: "AI CAPEX 二阶导监控 / 两长扩产链"
+  timezone: "Asia/Shanghai"
+
+# ---------- L2: 海外自动层 (yfinance) ----------
+hyperscalers:            # 四大云厂商: 季度 capex 的 YoY 增速 + 增速的环比变化(二阶导)
+  - {ticker: MSFT, name: 微软}
+  - {ticker: GOOGL, name: 谷歌}
+  - {ticker: AMZN, name: 亚马逊}
+  - {ticker: META, name: Meta}
+
+overseas_confirm:        # 需求侧确认: 收入斜率
+  - {ticker: NVDA, name: 英伟达, metric: revenue}
+  - {ticker: MU,   name: 美光,   metric: revenue_gm}   # 收入 + 毛利率
+
+# ---------- L3: 国内自动层 (akshare) ----------
+# fin=True 抓合同负债/存货(原材料备料代理), price=True 抓行情做拥挤度
+a_share_watchlist:
+  - {code: "688012", name: 中微公司,   tier: 主设备,     fin: true,  price: true}
+  - {code: "002371", name: 北方华创,   tier: 主设备,     fin: true,  price: true}
+  - {code: "688072", name: 拓荆科技,   tier: 主设备,     fin: true,  price: true}
+  - {code: "688082", name: 盛美上海,   tier: 主设备,     fin: false, price: true}
+  - {code: "603929", name: 亚翔集成,   tier: 洁净室工程, fin: true,  price: true}   # 领先指标
+  - {code: "603163", name: 圣晖集成,   tier: 洁净室工程, fin: true,  price: true}
+  - {code: "688361", name: 中科飞测,   tier: 量检测,     fin: false, price: true}
+  - {code: "300567", name: 精测电子,   tier: 量检测,     fin: false, price: true}
+  - {code: "300604", name: 长川科技,   tier: 测试机,     fin: false, price: true}
+  - {code: "000021", name: 深科技,     tier: 存储封测,   fin: false, price: true}   # 两长出货代理
+
+# ---------- 信号阈值 (已校准, 2026-07-04) ----------
+# 校准逻辑: 每条阈值必有"防什么"的显式陈述; 阈值变更必须留 commit + 理由。
+thresholds:
+  calibration_status: CALIBRATED
+  calibrated_at: "2026-07-04"
+  calibrated_by: "CodeBuddy + user review"
+
+  memory_slope:              # L1 存储合约价: z-of-change 必须被水平调制, 高位钝化≠证伪
+    decel_qoq_below: 15      # 环比涨幅回落至 <15% 触发减速观察
+                             # 防: 把 90%→60% 的高位回落误判为减速 (credit_stress_z 教训)
+    prev_qoq_above: 30       # 且上一期 ≥30% (确认是从高斜率回落, 而非低位波动)
+                             # 防: 15%→10% 这种低位噪音触发假阳性
+    negative_qoq_confirm: 0  # 环比转负 → 直接 CANDIDATE→ACTIONABLE 通道 (不等待连续证据)
+                             # 防: 存储价格真正转负时有滞后
+
+  hyperscaler_capex:         # L2 二阶导核心: 增速修正方向计数
+    decel_quarters: 2        # YoY 增速连续 N 季回落 → CANDIDATE
+                             # 防: 单季季节性波动触发假信号
+    abs_qoq_negative: true   # 叠加 capex 绝对值环比转负 → 升级条件
+                             # 防: 修正方向叠加减速仍不升级的钝化; 该升级时必须升级
+
+  domestic_orders:           # L3 确认层 (正向确认, 证伪"扩产退潮")
+    contract_liab_qoq_min: 10   # 合同负债环比 ≥10% 视为扩产确认(正向)
+                                # 防: 低基数/季节性带来微不足道的环比
+    inventory_accel_min: 15     # 存货环比 ≥15% 视为备料确认(正向)
+                                # 防: 同上, 备料扩张需要体量级信号
+
+  crowding:                  # 拥挤度: watchlist 合计成交额的 250 日分位
+    pctile_warn: 90          # ≥90 分位触发拥挤预警
+                             # 防: 非理性追高; 设置在 90 而非 80 避免频繁预警
+    lookback_days: 250       # 约一年交易日的滚动窗口
+
+  manual_staleness_days: 100 # 手动数据超过 N 天未更新 → STALE 标记
+                             # TrendForce 通常每季度出数据, 100天足够覆盖季报发布窗口
+
+# ---------- 状态机 (沿用 ABCD 三态 + 幂等护栏) ----------
+state_machine:
+  states: [OBSERVE, CANDIDATE, ACTIONABLE]
+  # 不对称规则: 升级需连续证据, 降级即时生效
+  upgrade_requires_consecutive: 2
+  downgrade_immediate: true

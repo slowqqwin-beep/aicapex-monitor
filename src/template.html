@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14181F; --panel:#1B212B; --panel-2:#20293596; --line:#2A3342;
+  --ink:#D8DEE6; --muted:#7A8494; --steel:#6FA8B8;
+  --observe:#5C6675; --candidate:#E0A93E; --actionable:#E05252;
+  --confirm:#4CAF82; --na:#454E5C;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --sans:'Noto Sans SC',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;padding:28px clamp(14px,4vw,52px) 60px}
+a{color:var(--steel)}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+header h1{font-size:19px;font-weight:700;letter-spacing:.04em}
+header .run{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto}
+.calib{font-family:var(--mono);font-size:11px;color:var(--candidate);border:1px solid var(--candidate);border-radius:3px;padding:1px 7px}
+
+/* 状态条 */
+#statestrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:26px}
+.chip{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--observe);border-radius:4px;padding:10px 12px}
+.chip .sid{font-size:12px;color:var(--muted)}
+.chip .st{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.06em;margin-top:2px}
+.chip.OBSERVE{border-left-color:var(--observe)} .chip.OBSERVE .st{color:var(--observe)}
+.chip.CANDIDATE{border-left-color:var(--candidate)} .chip.CANDIDATE .st{color:var(--candidate)}
+.chip.ACTIONABLE{border-left-color:var(--actionable)} .chip.ACTIONABLE .st{color:var(--actionable)}
+.chip .frozen{font-size:11px;color:var(--muted);margin-top:3px}
+
+section{margin-bottom:34px}
+h2{font-size:13px;font-weight:500;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+h2 b{color:var(--steel);font-weight:700;margin-right:8px}
+
+/* 二阶导带: 签名元素 — 水平→一阶→二阶三联 */
+.d2row{display:grid;grid-template-columns:150px 1fr 1fr 130px;gap:14px;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 16px;margin-bottom:8px}
+.d2row .who{font-weight:500}
+.d2row .who small{display:block;color:var(--muted);font-size:11px;font-family:var(--mono)}
+.spark{height:44px;position:relative}
+.spark .lbl{position:absolute;top:-4px;left:0;font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.1em}
+.d2num{text-align:right;font-family:var(--mono)}
+.d2num .v{font-size:24px;font-weight:600}
+.d2num .v.neg{color:var(--actionable)} .d2num .v.pos{color:var(--confirm)}
+.d2num .lbl{font-size:10px;color:var(--muted);letter-spacing:.1em}
+.badge{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;border:1px solid var(--na);color:var(--muted);margin-left:6px}
+.badge.STALE{border-color:var(--candidate);color:var(--candidate)}
+.badge.NA{border-color:var(--na);color:var(--na)}
+.badge.CONFIRM{border-color:var(--confirm);color:var(--confirm)}
+.flag{font-family:var(--mono);font-size:12px;color:var(--candidate);margin:2px 0 10px 2px}
+
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+th,td{padding:8px 12px;text-align:right;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:400;font-size:11px;letter-spacing:.08em}
+td:first-child,th:first-child{text-align:left;font-family:var(--sans)}
+tr:last-child td{border-bottom:none}
+td .na{color:var(--na)}
+td .pos{color:var(--confirm)} td .neg{color:var(--actionable)}
+
+/* 数据健康台账 */
+#health .item{font-family:var(--mono);font-size:12px;color:var(--muted);padding:4px 0;border-bottom:1px dashed var(--line)}
+#health .item b{color:var(--candidate);font-weight:600}
+footer{margin-top:44px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono)}
+@media(max-width:760px){.d2row{grid-template-columns:1fr 1fr;row-gap:10px}.d2row .who{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header>
+  <h1>{{ title }}</h1>
+  <span class="calib" id="calib"></span>
+  <span class="run">run: {{ run_at }} · 数据日期见各分层</span>
+</header>
+
+<div id="statestrip"></div>
+<section><h2><b>L1</b>高频斜率层 · 手动录入(无免费API, 带时效戳)</h2><div id="l1"></div></section>
+<section><h2><b>L2</b>海外二阶导层 · yfinance 自动</h2><div id="l2"></div></section>
+<section><h2><b>L3</b>国内确认层 · akshare 自动</h2><div id="l3"></div></section>
+<section><h2><b>台账</b>数据健康 / N-A 明细 (缺失即缺失, 不补值)</h2><div id="health"></div></section>
+
+<footer>诊断看板 · 不构成交易指令 · 阈值校准状态与状态机转移记录见 data/state.json</footer>
+
+<script>const PAYLOAD = {{ payload_json }};</script>
+<script>
+const $=s=>document.querySelector(s);
+const fmt=v=>v==null?'<span class="na">N/A</span>':(typeof v==='number'?v.toLocaleString():v);
+const sgn=v=>v==null?'<span class="na">N/A</span>':`<span class="${v<0?'neg':'pos'}">${v>0?'+':''}${v}</span>`;
+
+function sparkSVG(vals,label,color){
+  const v=(vals||[]).filter(x=>x!=null);
+  if(v.length<2)return `<div class="spark"><span class="lbl">${label}</span><span style="color:var(--na);font-family:var(--mono);font-size:11px;position:absolute;top:18px">N/A</span></div>`;
+  const w=170,h=34,mn=Math.min(...v,0),mx=Math.max(...v,0),rg=(mx-mn)||1;
+  const pts=v.map((x,i)=>`${(i/(v.length-1)*w).toFixed(1)},${(h-(x-mn)/rg*h).toFixed(1)}`).join(' ');
+  const zy=h-(0-mn)/rg*h;
+  return `<div class="spark"><span class="lbl">${label}</span>
+    <svg width="${w}" height="${h}" style="margin-top:10px">
+    <line x1="0" y1="${zy}" x2="${w}" y2="${zy}" stroke="var(--line)" stroke-width="1"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/>
+    <circle cx="${w}" cy="${pts.split(' ').pop().split(',')[1]}" r="2.6" fill="${color}"/></svg></div>`;
+}
+
+function d2Row(who,sub,levelVals,gVals,d2Vals,badges=''){
+  const last=(d2Vals||[]).filter(x=>x!=null).slice(-1)[0];
+  return `<div class="d2row">
+    <div class="who">${who}${badges}<small>${sub||''}</small></div>
+    ${sparkSVG(gVals,'一阶 · 增速','var(--steel)')}
+    ${sparkSVG(d2Vals,'二阶 · Δ增速','var(--candidate)')}
+    <div class="d2num"><div class="v ${last<0?'neg':last>0?'pos':''}">${last==null?'N/A':(last>0?'+':'')+last}</div><div class="lbl">最新二阶导 pp</div></div>
+  </div>`;
+}
+
+// ---- 状态条 ----
+$('#calib').textContent='阈值: '+PAYLOAD.calibration_status;
+$('#statestrip').innerHTML=Object.entries(PAYLOAD.states).filter(([k])=>!k.startsWith('_')).map(([id,r])=>
+  `<div class="chip ${r.state}"><div class="sid">${id}</div><div class="st">${r.state}</div>
+   ${r.frozen_reason?`<div class="frozen">❄ ${r.frozen_reason}</div>`:''}
+   <div class="frozen">连续证据 ${r.consecutive_hits} · 数据至 ${r.last_data_date||'—'}</div></div>`).join('');
+
+// ---- L1 ----
+(function(){
+  const m=PAYLOAD.l1.memory;
+  let html='';
+  if(m.status!=='OK'){html+=`<div class="d2row"><div class="who">存储合约价环比</div><div style="grid-column:2/-1;color:var(--na);font-family:var(--mono)">N/A — ${m.reason||''}</div></div>`;}
+  else{
+    const b=m.freshness==='STALE'?`<span class="badge STALE">STALE ${m.age_days}d</span>`:`<span class="badge">${m.age_days}d</span>`;
+    html+=d2Row('DRAM 合约价','环比% · TrendForce 手动',null,m.dram_qoq,m.dram_qoq.length>=2?[m.dram_d2]:[],b);
+    html+=d2Row('NAND 合约价','环比% · TrendForce 手动',null,m.nand_qoq,m.nand_qoq.length>=2?[m.nand_d2]:[],b);
+    (m.decel_flags||[]).forEach(f=>html+=`<div class="flag">⚠ ${f}</div>`);
+  }
+  for(const [key,blk] of Object.entries(PAYLOAD.l1.others||{})){
+    if(blk.status!=='OK'||!blk.series.length){html+=`<div class="d2row"><div class="who">${key}</div><div style="grid-column:2/-1;color:var(--na);font-family:var(--mono)">N/A — ${blk.reason||'未录入'}</div></div>`;}
+  }
+  $('#l1').innerHTML=html;
+})();
+
+// ---- L2 ----
+(function(){
+  const h=PAYLOAD.l2.hyperscalers;let html='';
+  for(const [name,c] of Object.entries(h.per_company)){
+    if(c.status!=='OK'){html+=d2Row(name,'capex '+(c.reason||''),null,[],[]);continue;}
+    html+=d2Row(name,`capex ${c.basis} · 连续减速${c.decel_streak}季 · 绝对QoQ ${c.capex_qoq_abs_pct==null?'N/A':c.capex_qoq_abs_pct+'%'}`,null,c.growth,c.d2);
+  }
+  if(h.aggregate)html+=d2Row('四家合计','capex YoY (齐口径季度)',null,h.aggregate.growth,h.aggregate.d2,'<span class="badge CONFIRM">AGG</span>');
+  html+=`<div class="flag">修正方向计数: ${h.companies_decelerating}/${h.companies_reporting} 家连续减速 · ${h.companies_abs_qoq_negative} 家绝对额环比转负 ${h.trigger_decel?'→ <b>减速触发</b>':''}</div>`;
+  for(const [name,r] of Object.entries(PAYLOAD.l2.revenues)){
+    if(r.status!=='OK'){html+=d2Row(name,'收入 '+(r.reason||''),null,[],[]);continue;}
+    html+=d2Row(name,'收入 QoQ%'+(r.gross_margin_pct?` · 最新毛利率 ${Object.values(r.gross_margin_pct).slice(-1)[0]}%`:''),null,r.qoq_growth,r.d2);
+  }
+  $('#l2').innerHTML=html;
+})();
+
+// ---- L3 ----
+(function(){
+  const o=PAYLOAD.l3.orders;let rows='';
+  for(const [name,r] of Object.entries(o.per_company)){
+    if(r.status!=='OK'){rows+=`<tr><td>${name}</td><td colspan="4"><span class="na">N/A — ${r.reason||''}</span></td></tr>`;continue;}
+    rows+=`<tr><td>${name}${r.expansion_confirmed?'<span class="badge CONFIRM">扩产确认</span>':''}</td>
+      <td>${fmt(r.report_dates.slice(-1)[0])}</td>
+      <td>${r.contract_liab?fmt(Math.round(r.contract_liab.slice(-1)[0]/1e6)/100)+'亿':'<span class="na">N/A</span>'}</td>
+      <td>${sgn(r.contract_liab_qoq_pct)}</td><td>${sgn(r.inventory_qoq_pct)}</td></tr>`;
+  }
+  let html=`<table><tr><th>公司</th><th>报告期</th><th>合同负债</th><th>合同负债QoQ%</th><th>存货QoQ%</th></tr>${rows}</table>`;
+  const c=PAYLOAD.l3.crowding;
+  html+=`<div class="flag" style="margin-top:12px">${c.status!=='OK'?'拥挤度 N/A — '+(c.reason||''):
+    `拥挤度: watchlist 合计成交额 250日分位 = <b>${c.latest_pctile}%</b> ${c.warn?'⚠ 高拥挤':''}${c.excluded_for_missing_data.length?` · 缺数剔除: ${c.excluded_for_missing_data.join(',')}`:''}`}</div>`;
+  $('#l3').innerHTML=html;
+})();
+
+// ---- 数据健康台账 ----
+$('#health').innerHTML=(PAYLOAD.health||[]).map(h=>`<div class="item"><b>${h.status}</b> · ${h.source} — ${h.reason||'OK'}</div>`).join('')||'<div class="item">全部数据源 OK</div>';
+</script>
+</body>
+</html>

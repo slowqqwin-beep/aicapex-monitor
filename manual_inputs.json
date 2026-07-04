@@ -1,0 +1,36 @@
+{
+  "_readme": "L1 高频层中无免费 API 的序列。每次更新须填 as_of 与 source。超过 config.thresholds.manual_staleness_days(100天) 未更新自动标 STALE。禁止估算填充——没有数据就留空数组, 看板显示 N/A。",
+  "_maintenance": {
+    "latest_quarter": "2026Q2",
+    "next_quarter": "2026Q3",
+    "stale_deadline": "2026-10-08",
+    "source": "TrendForce 合约价季报 (无免费API, 需手工/爬虫录入)",
+    "procedure": "Q3 季报通常 10 月初发布。在 memory_contract_price.series 中追加一条 {\"period\":\"2026Q3\",\"dram_qoq_pct\":...,\"nand_qoq_pct\":...,\"as_of\":\"YYYY-MM-DD\",\"source\":\"TrendForce\"}。as_of 填实际获取日期。", 
+    "last_verified": "2026-07-04"
+  },
+
+  "memory_contract_price": {
+    "unit": "环比涨幅 %",
+    "series": [
+      {"period": "2026Q1", "dram_qoq_pct": 92.5, "nand_qoq_pct": 35.5, "as_of": "2026-04-10", "source": "TrendForce (90~95 / 33~38 取中值)"},
+      {"period": "2026Q2", "dram_qoq_pct": 60.5, "nand_qoq_pct": 72.5, "as_of": "2026-06-30", "source": "TrendForce (58~63 / 70~75 取中值)"}
+    ]
+  },
+
+  "seaj_billings": {
+    "unit": "十亿日元, 3个月移动平均",
+    "series": []
+  },
+
+  "korea_chip_exports_20d": {
+    "unit": "同比 %",
+    "series": []
+  },
+
+  "micron_sca_coverage": {
+    "unit": "take-or-pay 长协覆盖率 %",
+    "series": [
+      {"period": "FY2026Q3", "dram_pct": 20, "nand_pct": 33.3, "as_of": "2026-07-02", "source": "美光财报: 16份SCA"}
+    ]
+  }
+}

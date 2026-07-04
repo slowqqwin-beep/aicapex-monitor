@@ -1,0 +1,29 @@
+{
+  "L1_存储斜率减速": {
+    "state": "OBSERVE",
+    "consecutive_hits": 0,
+    "last_data_date": "2026Q2",
+    "history": []
+  },
+  "L2_云厂商capex减速": {
+    "state": "OBSERVE",
+    "consecutive_hits": 0,
+    "last_data_date": null,
+    "history": [],
+    "frozen_reason": "数据 N/A, 状态冻结"
+  },
+  "L3_国内扩产确认": {
+    "state": "OBSERVE",
+    "consecutive_hits": 0,
+    "last_data_date": null,
+    "history": [],
+    "frozen_reason": "数据 N/A, 状态冻结"
+  },
+  "L3_拥挤度预警": {
+    "state": "OBSERVE",
+    "consecutive_hits": 0,
+    "last_data_date": null,
+    "history": [],
+    "frozen_reason": "数据 N/A, 状态冻结"
+  }
+}
