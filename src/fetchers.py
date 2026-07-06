@@ -8,12 +8,26 @@
 """
 from __future__ import annotations
 import json
+import time
 import datetime as dt
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _retry(fn, max_retries=3, backoff=2):
+    """GitHub Actions 跨境连接 akshare 偶发 reset, 最多重试 3 次。"""
+    last_err = None
+    for i in range(max_retries):
+        try:
+            return fn()
+        except Exception as e:
+            last_err = e
+            if i < max_retries - 1:
+                time.sleep(backoff ** i)
+    raise last_err
 
 
 def _ok(data, source: str):
@@ -110,13 +124,13 @@ def fetch_balance_sheet_items(code: str, name: str):
 
 
 def fetch_daily_turnover(code: str, lookback_days: int = 300):
-    """日成交额 (元), 供拥挤度分位计算。"""
+    """日成交额 (元), 供拥挤度分位计算。带重试 (GitHub Actions 跨境偶发 connection reset)。"""
     src = f"akshare:hist:{code}"
     try:
         import akshare as ak
         end = dt.date.today().strftime("%Y%m%d")
         start = (dt.date.today() - dt.timedelta(days=int(lookback_days * 1.6))).strftime("%Y%m%d")
-        df = ak.stock_zh_a_hist(symbol=code, period="daily", start_date=start, end_date=end, adjust="")
+        df = _retry(lambda: ak.stock_zh_a_hist(symbol=code, period="daily", start_date=start, end_date=end, adjust=""))
         if df is None or df.empty or "成交额" not in df.columns:
             return _na("akshare 行情为空或无成交额列", src)
         df = df.tail(lookback_days)
