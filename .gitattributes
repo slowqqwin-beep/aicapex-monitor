@@ -1,0 +1,3 @@
+# 产物文件: merge 冲突时永远用本地版, 不用人工解冲突
+docs/index.html merge=ours
+data/state.json merge=ours
