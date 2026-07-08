@@ -2,28 +2,31 @@
 # 用法: powershell -ExecutionPolicy Bypass -File daily_update.ps1
 $ErrorActionPreference = "Stop"
 
-# 1. 关代理 (避开公司代理拦截东财)
-$env:HTTP_PROXY = ""
-$env:HTTPS_PROXY = ""
+# 1. 彻底删代理 (定时任务可能继承系统级代理)
+Remove-Item Env:HTTP_PROXY -ErrorAction SilentlyContinue
+Remove-Item Env:HTTPS_PROXY -ErrorAction SilentlyContinue
+Remove-Item Env:http_proxy -ErrorAction SilentlyContinue
+Remove-Item Env:https_proxy -ErrorAction SilentlyContinue
+Remove-Item Env:ALL_PROXY -ErrorAction SilentlyContinue
 
-# 2. 抓数据 + 渲染
-Set-Location "d:\liquidity-dashboard\A股\ai capex二阶导叙事\aicapex_monitor"
+# 2. 切到脚本所在目录
+Set-Location $PSScriptRoot
+
+# 3. 抓数据 + 渲染
 python main.py
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "python main.py 失败, 退出码 $LASTEXITCODE"
+    Write-Error "python main.py failed, code $LASTEXITCODE"
     exit 1
 }
 
-# 3. git 提交 (空提交不报错)
+# 4. git
 git add -A
-$diff = git diff --cached --quiet
+git diff --cached --quiet
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "无变更, 跳过提交"
+    Write-Host "no changes, skip commit"
     exit 0
 }
 git commit -m "auto: daily dashboard update $(Get-Date -Format 'yyyy-MM-dd')"
-
-# 4. 拉取 + 推送 (.gitattributes 已设置 merge=ours, 不会冲突)
 git pull --rebase origin main
 git push origin main
 

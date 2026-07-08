@@ -9,6 +9,7 @@
 from __future__ import annotations
 import json
 import time
+import random
 import datetime as dt
 from pathlib import Path
 
@@ -17,8 +18,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _retry(fn, max_retries=3, backoff=2):
-    """GitHub Actions 跨境连接 akshare 偶发 reset, 最多重试 3 次。"""
+def _retry(fn, max_retries=5, backoff=3):
+    """akshare 偶发 connection reset, 5 次重试 + 随机抖动防并发封禁。"""
     last_err = None
     for i in range(max_retries):
         try:
@@ -26,7 +27,8 @@ def _retry(fn, max_retries=3, backoff=2):
         except Exception as e:
             last_err = e
             if i < max_retries - 1:
-                time.sleep(backoff ** i)
+                jitter = (backoff ** i) + random.uniform(0.5, 2.0)
+                time.sleep(jitter)
     raise last_err
 
 
