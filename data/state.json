@@ -19,15 +19,14 @@
   },
   "L3_拥挤度预警": {
     "state": "CANDIDATE",
-    "consecutive_hits": 0,
-    "last_data_date": "2026-07-10",
+    "consecutive_hits": 1,
+    "last_data_date": "2026-07-13",
     "history": [
       {
         "date": "2026-07-10",
         "from": "OBSERVE",
         "to": "CANDIDATE"
       }
-    ],
-    "frozen_reason": "数据 N/A, 状态冻结"
+    ]
   }
 }
