@@ -27,6 +27,7 @@
         "from": "OBSERVE",
         "to": "CANDIDATE"
       }
-    ]
+    ],
+    "frozen_reason": "数据 N/A, 状态冻结"
   }
 }
