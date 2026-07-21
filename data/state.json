@@ -19,8 +19,8 @@
   },
   "L3_拥挤度预警": {
     "state": "ACTIONABLE",
-    "consecutive_hits": 4,
-    "last_data_date": "2026-07-20",
+    "consecutive_hits": 5,
+    "last_data_date": "2026-07-21",
     "history": [
       {
         "date": "2026-07-10",
@@ -32,7 +32,6 @@
         "from": "CANDIDATE",
         "to": "ACTIONABLE"
       }
-    ],
-    "frozen_reason": "数据 N/A, 状态冻结"
+    ]
   }
 }
