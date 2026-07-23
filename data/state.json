@@ -18,9 +18,9 @@
     "history": []
   },
   "L3_拥挤度预警": {
-    "state": "ACTIONABLE",
-    "consecutive_hits": 6,
-    "last_data_date": "2026-07-22",
+    "state": "OBSERVE",
+    "consecutive_hits": 0,
+    "last_data_date": "2026-07-23",
     "history": [
       {
         "date": "2026-07-10",
@@ -31,6 +31,11 @@
         "date": "2026-07-14",
         "from": "CANDIDATE",
         "to": "ACTIONABLE"
+      },
+      {
+        "date": "2026-07-23",
+        "from": "ACTIONABLE",
+        "to": "OBSERVE"
       }
     ]
   }
