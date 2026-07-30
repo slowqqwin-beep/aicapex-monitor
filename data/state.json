@@ -13,8 +13,8 @@
   },
   "L3_国内扩产确认": {
     "state": "OBSERVE",
-    "consecutive_hits": 1,
-    "last_data_date": "2026-03-31",
+    "consecutive_hits": 0,
+    "last_data_date": "2026-06-30",
     "history": []
   },
   "L3_拥挤度预警": {
