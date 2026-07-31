@@ -20,7 +20,7 @@
   "L3_拥挤度预警": {
     "state": "OBSERVE",
     "consecutive_hits": 0,
-    "last_data_date": "2026-07-30",
+    "last_data_date": "2026-07-31",
     "history": [
       {
         "date": "2026-07-10",
