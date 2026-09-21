@@ -37,6 +37,7 @@
         "from": "ACTIONABLE",
         "to": "OBSERVE"
       }
-    ]
+    ],
+    "frozen_reason": "数据 N/A, 状态冻结"
   }
 }
